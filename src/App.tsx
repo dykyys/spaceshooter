@@ -1,20 +1,26 @@
 import { useEffect, useRef } from 'react';
-import { Application, Graphics, Sprite, Assets } from 'pixi.js';
+import { Application, Graphics, Sprite } from 'pixi.js';
 import { createRocket } from './elements/rocket';
 import { createBullet } from './elements/bullet';
 
-import rocketImage from './images/milkiway.jpg';
+import { backGround } from './elements/backGround';
+// import rocketImage from './images/asteroid.png';
+import { createAsteroid } from './elements/asteroid';
 
 function App() {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const asteriodIntervalId = useRef<number>(0);
 
   useEffect(() => {
     const app = new Application();
     const rocket = createRocket();
 
     const bullets: Graphics[] = [];
+    const asteroids: Sprite[] = [];
+
     const bulletSpeed = -10;
     const rocketSpeed = 10;
+
     const keys: Record<string, boolean> = {};
 
     (async () => {
@@ -24,15 +30,10 @@ function App() {
         backgroundColor: 0x000000,
       });
 
-      const texture = await Assets.load(rocketImage);
+      const sprite = await backGround();
 
-      const sprite = new Sprite(texture);
-
-      // Налаштовуємо розмір текстури для повного покриття екрану
       sprite.width = app.screen.width;
       sprite.height = app.screen.height;
-
-      // app.stage.addChild(sprite);
 
       if (canvasRef.current) {
         canvasRef.current.appendChild(app.canvas);
@@ -40,12 +41,29 @@ function App() {
 
       rocket.x = app.screen.width / 2;
       rocket.y = app.screen.height - 90;
+
       app.stage.addChild(sprite, rocket);
 
-      app.ticker.add(() => {
+      asteriodIntervalId.current = setInterval(async () => {
+        if (asteroids.length === 10) {
+          clearInterval(asteriodIntervalId.current);
+          return;
+        }
+        const asteroid = await createAsteroid();
+        app.stage.addChild(asteroid);
+        asteroids.push(asteroid);
+      }, 2000);
+
+      app.ticker.add((time) => {
+        asteroids.forEach((asteroid) => {
+          asteroid.y += 0.6;
+          asteroid.rotation += 0.01 * time.deltaTime;
+        });
+
         if (keys['ArrowLeft'] && rocket.x > rocket.width / 2) {
           rocket.x -= rocketSpeed;
         }
+
         if (
           keys['ArrowRight'] &&
           rocket.x < app.screen.width - rocket.width / 2
