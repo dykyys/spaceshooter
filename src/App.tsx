@@ -4,7 +4,6 @@ import { createRocket } from './elements/rocket';
 import { createBullet } from './elements/bullet';
 
 import { backGround } from './elements/backGround';
-// import rocketImage from './images/asteroid.png';
 import { createAsteroid } from './elements/asteroid';
 
 function App() {
@@ -55,7 +54,42 @@ function App() {
       }, 2000);
 
       app.ticker.add((time) => {
-        asteroids.forEach((asteroid) => {
+        bullets.forEach((bullet, index) => {
+          bullet.y -= 10;
+
+          if (bullet.y < 0) {
+            app.stage.removeChild(bullet);
+            bullets.splice(index, 1);
+          }
+
+          asteroids.forEach((asteroid, asteroidIndex) => {
+            const boundsA = bullet.getBounds();
+            const boundsB = asteroid.getBounds();
+
+            if (
+              boundsA.x + boundsA.width > boundsB.x &&
+              boundsA.x < boundsB.x + boundsB.width &&
+              boundsA.y + boundsA.height > boundsB.y &&
+              boundsA.y < boundsB.y + boundsB.height
+            ) {
+              app.stage.removeChild(bullet);
+              bullets.splice(index, 1);
+
+              app.stage.removeChild(asteroid);
+              asteroids.splice(asteroidIndex, 1);
+
+              console.log('yes');
+            }
+          });
+        });
+
+        asteroids.forEach((asteroid, index) => {
+          if (asteroid.y > app.screen.height) {
+            app.stage.removeChild(asteroid);
+            asteroid.destroy();
+            asteroids.splice(index, 1);
+            return;
+          }
           asteroid.y += 0.6;
           asteroid.rotation += 0.01 * time.deltaTime;
         });
@@ -109,6 +143,7 @@ function App() {
 
   return (
     <>
+      <p>10/10</p>
       <div ref={canvasRef} />
     </>
   );
