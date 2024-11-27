@@ -1,0 +1,11 @@
+.bullets-counter {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: var(--color-brightPink);
+  font-size: 24px;
+  font-weight: bold;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 1px;
+  text-transform: lowercase;
+}

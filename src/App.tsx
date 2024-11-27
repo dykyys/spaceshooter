@@ -8,15 +8,27 @@ import {
   createAsteroid,
 } from './elements';
 
-import { StartGame } from './components';
+import { StartGame, CountDestroyedAsteroids, ShowGameTime } from './components';
+import { updateGameTime } from './helpers';
 
 function App() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const asteriodIntervalId = useRef<number>(0);
+  const gameTimeIntervalId = useRef<number>(0);
   const [play, setPlay] = useState(false);
+  const [destroyedAsteroids, setDestroyedAsteroids] = useState(0);
+  const [gameTime, setGameTime] = useState('00');
 
   useEffect(() => {
     if (!play) return;
+
+    gameTimeIntervalId.current = setInterval(() => {
+      setGameTime(updateGameTime);
+    }, 1000);
+
+    setTimeout(() => {
+      clearInterval(gameTimeIntervalId.current);
+    }, 60000);
 
     const app = new Application();
     const rocket = createRocket();
@@ -57,7 +69,7 @@ function App() {
         const asteroid = await createAsteroid();
         app.stage.addChild(asteroid);
         asteroids.push(asteroid);
-      }, 2000);
+      }, 4000);
 
       app.ticker.add((time) => {
         bullets.forEach((bullet, index) => {
@@ -85,6 +97,7 @@ function App() {
               asteroids.splice(asteroidIndex, 1);
 
               console.log('yes');
+              setDestroyedAsteroids((prev) => prev + 1);
             }
           });
         });
@@ -96,7 +109,7 @@ function App() {
             asteroids.splice(index, 1);
             return;
           }
-          asteroid.y += 0.6;
+          asteroid.y += 0.3;
           asteroid.rotation += 0.01 * time.deltaTime;
         });
 
@@ -151,9 +164,12 @@ function App() {
 
   return (
     <>
-      <p>10/10</p>
       {play ? (
-        <div ref={canvasRef} />
+        <div style={{ position: 'relative' }}>
+          <CountDestroyedAsteroids destroyedAsteroids={destroyedAsteroids} />
+          <ShowGameTime time={gameTime} />
+          <div ref={canvasRef} />
+        </div>
       ) : (
         <StartGame onClick={() => setPlay(true)} />
       )}
