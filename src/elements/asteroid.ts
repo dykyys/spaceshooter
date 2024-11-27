@@ -6,7 +6,7 @@ export const createAsteroid = async () => {
 
   const sprite = new Sprite(texture);
   sprite.anchor.set(0.5);
-  sprite.x = Math.floor(Math.random() * 1200);
+  sprite.x = Math.floor(Math.random() * 1170);
   sprite.y = 0;
   sprite.scale = 0.1;
   return sprite;

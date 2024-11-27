@@ -1,16 +1,23 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Application, Graphics, Sprite } from 'pixi.js';
-import { createRocket } from './elements/rocket';
-import { createBullet } from './elements/bullet';
 
-import { backGround } from './elements/backGround';
-import { createAsteroid } from './elements/asteroid';
+import {
+  createBullet,
+  backGround,
+  createRocket,
+  createAsteroid,
+} from './elements';
+
+import { StartGame } from './components';
 
 function App() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const asteriodIntervalId = useRef<number>(0);
+  const [play, setPlay] = useState(false);
 
   useEffect(() => {
+    if (!play) return;
+
     const app = new Application();
     const rocket = createRocket();
 
@@ -30,9 +37,10 @@ function App() {
       });
 
       const sprite = await backGround();
-
       sprite.width = app.screen.width;
       sprite.height = app.screen.height;
+
+      app.stage.addChild(sprite, rocket);
 
       if (canvasRef.current) {
         canvasRef.current.appendChild(app.canvas);
@@ -40,8 +48,6 @@ function App() {
 
       rocket.x = app.screen.width / 2;
       rocket.y = app.screen.height - 90;
-
-      app.stage.addChild(sprite, rocket);
 
       asteriodIntervalId.current = setInterval(async () => {
         if (asteroids.length === 10) {
@@ -138,13 +144,19 @@ function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      console.log('unmount');
+      app.destroy(true, { children: true });
     };
-  }, []);
+  }, [play]);
 
   return (
     <>
       <p>10/10</p>
-      <div ref={canvasRef} />
+      {play ? (
+        <div ref={canvasRef} />
+      ) : (
+        <StartGame onClick={() => setPlay(true)} />
+      )}
     </>
   );
 }
