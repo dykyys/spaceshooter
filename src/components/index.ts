@@ -1,3 +1,3 @@
 export * from './StartGame/StartGame';
-export * from './CountDestroyedAsteroids/CountDestroyedAsteroids';
+export * from './ShowCountBullets/ShowCountBullets';
 export * from './ShowGameTime/ShowGameTime';

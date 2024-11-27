@@ -8,7 +8,7 @@ import {
   createAsteroid,
 } from './elements';
 
-import { StartGame, CountDestroyedAsteroids, ShowGameTime } from './components';
+import { StartGame, ShowCountBullets, ShowGameTime } from './components';
 import { updateGameTime } from './helpers';
 
 function App() {
@@ -16,7 +16,7 @@ function App() {
   const asteriodIntervalId = useRef<number>(0);
   const gameTimeIntervalId = useRef<number>(0);
   const [play, setPlay] = useState(false);
-  const [destroyedAsteroids, setDestroyedAsteroids] = useState(0);
+  const [showCountBullets, setShowCountBullets] = useState(0);
   const [gameTime, setGameTime] = useState('00');
 
   useEffect(() => {
@@ -35,6 +35,8 @@ function App() {
 
     const bullets: Graphics[] = [];
     const asteroids: Sprite[] = [];
+
+    let countBullets: number = 0;
 
     const bulletSpeed = -10;
     const rocketSpeed = 10;
@@ -96,8 +98,8 @@ function App() {
               app.stage.removeChild(asteroid);
               asteroids.splice(asteroidIndex, 1);
 
-              console.log('yes');
-              setDestroyedAsteroids((prev) => prev + 1);
+              // console.log('yes');
+              // setDestroyedAsteroids((prev) => prev + 1);
             }
           });
         });
@@ -136,8 +138,11 @@ function App() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       keys[e.code] = true;
-
       if (e.code === 'Space') {
+        if (countBullets === 10) {
+          return;
+        }
+
         const bullet = createBullet();
 
         bullet.x = rocket.x - 2.5;
@@ -145,6 +150,8 @@ function App() {
 
         bullets.push(bullet);
         app.stage.addChild(bullet);
+        setShowCountBullets((prev) => prev + 1);
+        countBullets += 1;
       }
     };
 
@@ -154,10 +161,11 @@ function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      console.log('unmount');
+
       app.destroy(true, { children: true });
     };
   }, [play]);
@@ -165,8 +173,8 @@ function App() {
   return (
     <>
       {play ? (
-        <div style={{ position: 'relative' }}>
-          <CountDestroyedAsteroids destroyedAsteroids={destroyedAsteroids} />
+        <div style={{ position: 'relative', width: '1280px', height: '720px' }}>
+          <ShowCountBullets bullets={showCountBullets} />
           <ShowGameTime time={gameTime} />
           <div ref={canvasRef} />
         </div>
