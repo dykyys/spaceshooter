@@ -8,7 +8,12 @@ import {
   createAsteroid,
 } from './elements';
 
-import { StartGame, ShowCountBullets, ShowGameTime } from './components';
+import {
+  StartGame,
+  ShowCountBullets,
+  ShowGameTime,
+  ShowCountdown,
+} from './components';
 import { updateGameTime } from './helpers';
 
 function App() {
@@ -18,6 +23,8 @@ function App() {
   const [play, setPlay] = useState(false);
   const [showCountBullets, setShowCountBullets] = useState(0);
   const [gameTime, setGameTime] = useState('00');
+
+  const [gameStarted, setGameStarted] = useState(false);
 
   useEffect(() => {
     if (!play) return;
@@ -38,6 +45,8 @@ function App() {
 
     let countBullets: number = 0;
 
+    let countAsteroidsShotDown: number = 0;
+
     const bulletSpeed = -10;
     const rocketSpeed = 10;
 
@@ -51,6 +60,7 @@ function App() {
       });
 
       const sprite = await backGround();
+
       sprite.width = app.screen.width;
       sprite.height = app.screen.height;
 
@@ -74,6 +84,8 @@ function App() {
       }, 4000);
 
       app.ticker.add((time) => {
+        console.log('countAsteroidsShotDown', countAsteroidsShotDown);
+
         bullets.forEach((bullet, index) => {
           bullet.y -= 10;
 
@@ -98,8 +110,7 @@ function App() {
               app.stage.removeChild(asteroid);
               asteroids.splice(asteroidIndex, 1);
 
-              // console.log('yes');
-              // setDestroyedAsteroids((prev) => prev + 1);
+              countAsteroidsShotDown += 1;
             }
           });
         });
@@ -170,18 +181,28 @@ function App() {
     };
   }, [play]);
 
+  const onStartGame = () => {
+    setGameStarted(true);
+    setTimeout(() => {
+      setPlay(true);
+    }, 4000);
+  };
+
   return (
-    <>
+    <div style={{ position: 'relative', width: '1280px', height: '720px' }}>
+      {gameStarted && (
+        <ShowCountdown onComplete={() => setGameStarted(false)} />
+      )}
       {play ? (
-        <div style={{ position: 'relative', width: '1280px', height: '720px' }}>
+        <>
           <ShowCountBullets bullets={showCountBullets} />
           <ShowGameTime time={gameTime} />
           <div ref={canvasRef} />
-        </div>
+        </>
       ) : (
-        <StartGame onClick={() => setPlay(true)} />
+        <StartGame onClick={onStartGame} />
       )}
-    </>
+    </div>
   );
 }
 

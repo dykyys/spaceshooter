@@ -1,0 +1,17 @@
+.box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  background: transparent;
+  color: #00aaff;
+  font-size: 120px;
+  font-weight: bold;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.wrapper {
+  opacity: 0;
+}

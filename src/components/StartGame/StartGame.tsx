@@ -5,7 +5,7 @@ import startGame from '../../images/startGame.png';
 
 export const StartGame = ({ onClick }: IStartGame) => {
   return (
-    <div className={s.box}>
+    <div>
       <img src={startGame} alt="start game" />
 
       <button className={s.startBtn} onClick={onClick}>
