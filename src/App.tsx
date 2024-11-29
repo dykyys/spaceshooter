@@ -6,6 +6,7 @@ import {
   backGround,
   createRocket,
   createAsteroid,
+  createText,
 } from './elements';
 
 import {
@@ -42,15 +43,14 @@ function App() {
 
     const bullets: Graphics[] = [];
     const asteroids: Sprite[] = [];
-
-    let countBullets: number = 0;
-
-    let countAsteroidsShotDown: number = 0;
+    const keys: Record<string, boolean> = {};
 
     const bulletSpeed = -10;
     const rocketSpeed = 10;
 
-    const keys: Record<string, boolean> = {};
+    let bulletsFired: number = 0;
+    let destroyedAsteroids: number = 0;
+    let asteroidsCreated: number = 0;
 
     (async () => {
       await app.init({
@@ -59,10 +59,7 @@ function App() {
         backgroundColor: 0x000000,
       });
 
-      const sprite = await backGround();
-
-      sprite.width = app.screen.width;
-      sprite.height = app.screen.height;
+      const sprite = await backGround(app);
 
       app.stage.addChild(sprite, rocket);
 
@@ -73,18 +70,32 @@ function App() {
       rocket.x = app.screen.width / 2;
       rocket.y = app.screen.height - 90;
 
+      const displayGameOverText = (message: string) => {
+        const text = createText(app, message);
+        app.stage.addChild(text);
+
+        if (text.scale.x > 1) {
+          text.scale.x -= 0.02;
+          text.scale.y -= 0.02;
+        } else {
+          text.scale.set(1);
+          app.stop();
+        }
+      };
+
       asteriodIntervalId.current = setInterval(async () => {
-        if (asteroids.length === 10) {
+        if (asteroids.length >= 10) {
           clearInterval(asteriodIntervalId.current);
           return;
         }
+
         const asteroid = await createAsteroid();
         app.stage.addChild(asteroid);
         asteroids.push(asteroid);
-      }, 4000);
+      }, 1000);
 
       app.ticker.add((time) => {
-        console.log('countAsteroidsShotDown', countAsteroidsShotDown);
+        console.log('tick');
 
         bullets.forEach((bullet, index) => {
           bullet.y -= 10;
@@ -106,11 +117,16 @@ function App() {
             ) {
               app.stage.removeChild(bullet);
               bullets.splice(index, 1);
+              destroyedAsteroids += 1;
 
               app.stage.removeChild(asteroid);
               asteroids.splice(asteroidIndex, 1);
 
-              countAsteroidsShotDown += 1;
+              // if (destroyedAsteroids === 10) {
+              console.log(destroyedAsteroids);
+              displayGameOverText('YOU WIN');
+              // app.stop();
+              // }
             }
           });
         });
@@ -149,8 +165,9 @@ function App() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       keys[e.code] = true;
+
       if (e.code === 'Space') {
-        if (countBullets === 10) {
+        if (bulletsFired === 10) {
           return;
         }
 
@@ -162,7 +179,7 @@ function App() {
         bullets.push(bullet);
         app.stage.addChild(bullet);
         setShowCountBullets((prev) => prev + 1);
-        countBullets += 1;
+        bulletsFired += 1;
       }
     };
 
