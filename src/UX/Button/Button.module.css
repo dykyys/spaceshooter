@@ -1,11 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
-.box {
-  position: relative;
-  width: 1280px;
-  height: 720px;
-}
-
-.startBtn {
+.btn {
   position: absolute;
   bottom: -70px;
   left: 50%;
@@ -32,4 +25,10 @@
     background-color: var(--color-blue);
     color: var(--color-dark);
   }
+}
+
+.center {
+  bottom: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--color-light-blue);
 }

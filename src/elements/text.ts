@@ -1,34 +1,30 @@
-import { Application, Color, FillGradient, Text, TextStyle } from 'pixi.js';
+import { Application, Text, TextStyle } from 'pixi.js';
 
-export const createText = (app: Application, message: string) => {
-  const fill = new FillGradient(0, 0, 0, 36 * 1.7 * 7);
-
-  const colors = ['#33ff55', '#33ccff'].map((color) =>
-    Color.shared.setValue(color).toNumber()
-  );
-
-  colors.forEach((number, index) => {
-    const ratio = index / colors.length;
-
-    fill.addColorStop(ratio, number);
-  });
+export const createText = (app: Application, type: boolean): Text => {
   const style = new TextStyle({
     fontFamily: 'Orbitron',
     fontSize: 120,
     fontWeight: 'bold',
-    fill: { fill },
-    stroke: { color: '#000000', width: 2, join: 'round' },
-    // strokeThickness: 2,
+    fill: type ? '#33ff55' : '#c61313',
+    stroke: {
+      color: '#11571d',
+      width: 4,
+      join: 'round',
+    },
     letterSpacing: 5,
     dropShadow: {
-      color: '#33ccff',
+      color: type ? '#33ff55' : '#c61313',
       blur: 20,
       angle: Math.PI / 6,
-      distance: 10,
+      distance: 2,
+      alpha: 0.3,
     },
     align: 'center',
   });
-  const text = new Text({ text: message, style });
+  const text = new Text({
+    text: type ? 'YOU WIN!!!' : 'YOU LOSS...😢',
+    style,
+  });
 
   text.anchor.set(0.5);
   text.scale.set(2);
