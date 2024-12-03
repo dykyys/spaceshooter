@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Application, Graphics, Sprite, Text } from 'pixi.js';
+import { Application, Graphics, Sprite } from 'pixi.js';
 
 import {
   createBullet,
@@ -7,22 +7,34 @@ import {
   createRocket,
   createAsteroid,
   createText,
+  createBoss,
+  createBossHPBar,
 } from '../../elements';
 
-import { ShowCountBullets, ShowGameTime } from '../../components';
+import {
+  ShowCountBullets,
+  ShowCountdown,
+  ShowGameTime,
+} from '../../components';
 
 import { updateGameTime } from '../../helpers';
 
 export const Game = ({ setPlay }: { setPlay: () => void }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const asteriodIntervalId = useRef<number>(0);
+  // const asteriodIntervalId = useRef<number>(0);
   const gameTimeIntervalId = useRef<number>(0);
   const clearGameTimeTimeoutId = useRef<number>(0);
   const [start, setStart] = useState(false);
   const [showCountBullets, setShowCountBullets] = useState(0);
   const [gameTime, setGameTime] = useState('00');
+  const [level, setLevel] = useState(1);
 
-  const LIMIT_ASTEROIDS: number = 10;
+  const [gameStarted, setGameStarted] = useState(false);
+
+  const LIMIT_ASTEROIDS: number = 3;
+  const WIDTH = 1280;
+  const HEIGHT = 720;
+  const BOSS_HP = 4;
 
   setTimeout(() => setStart(true), 0);
 
@@ -37,10 +49,11 @@ export const Game = ({ setPlay }: { setPlay: () => void }) => {
     }, 60000);
 
     const app = new Application();
-    const rocket = createRocket();
+    const rocket = createRocket({ width: WIDTH, height: HEIGHT });
 
     const bullets: Graphics[] = [];
     const asteroids: Sprite[] = [];
+    const bossBullets: Graphics[] = [];
     const keys: Record<string, boolean> = {};
 
     const bulletSpeed = -10;
@@ -48,68 +61,52 @@ export const Game = ({ setPlay }: { setPlay: () => void }) => {
 
     let asteroidImpacts: number = 0.4;
     let bulletsFired: number = 0;
-    let destroyedAsteroids: number = 0;
-    let asteroidsCreated: number = 0;
+    // let destroyedAsteroids: number = 0;
+    // let asteroidsCreated: number = 0;
+    let gameOver: null | string = null;
 
-    const displayGameOverText = (text: Text) => {
-      clearInterval(asteriodIntervalId.current);
-      clearInterval(gameTimeIntervalId.current);
-      clearTimeout(clearGameTimeTimeoutId.current);
+    const startFirstLevel = () => {
+      let destroyedAsteroids: number = 0;
+      let asteroidsCreated: number = 0;
 
-      asteroidImpacts = 0;
-      if (text.scale.x > 1) {
-        text.scale.x -= 0.015;
-        text.scale.y -= 0.015;
-      } else {
-        text.scale.set(1);
-        app.stop();
-        setTimeout(() => {
-          setPlay();
-        }, 2000);
-      }
-    };
-
-    (async () => {
-      await app.init({
-        width: 1280,
-        height: 720,
-        backgroundColor: 0x000000,
-      });
-
-      const sprite = await backGround(app);
-
-      app.stage.addChild(sprite, rocket);
-
-      const textWin = createText(app, true);
-      const textLoss = createText(app, false);
-
-      if (canvasRef.current) {
-        canvasRef.current.appendChild(app.canvas);
-      }
-
-      rocket.x = app.screen.width / 2;
-      rocket.y = app.screen.height - 90;
-
-      asteriodIntervalId.current = setInterval(async () => {
+      const asteriodIntervalId = setInterval(async () => {
         if (asteroidsCreated >= LIMIT_ASTEROIDS) {
-          clearInterval(asteriodIntervalId.current);
+          clearInterval(asteriodIntervalId);
           return;
         }
 
         const asteroid = await createAsteroid();
         app.stage.addChild(asteroid);
         asteroids.push(asteroid);
+
         asteroidsCreated += 1;
       }, 2500);
 
       app.ticker.add((time) => {
+        if (gameOver) {
+          const text = createText({
+            width: WIDTH,
+            height: HEIGHT,
+            type: gameOver === 'win' ? true : false,
+            text: gameOver === 'win' ? 'You WIN!!!' : 'You LOSS...😥',
+          });
+
+          app.stage.addChild(text);
+
+          displayGameOverText();
+          return;
+        }
+
         if (destroyedAsteroids === LIMIT_ASTEROIDS) {
-          if (
-            !app.stage.children.find((item) => item?.renderPipeId === 'text')
-          ) {
-            app.stage.addChild(textWin);
-          }
-          displayGameOverText(textWin);
+          setTimeout(() => {
+            setLevel(2);
+          }, 5000);
+
+          setGameStarted(true);
+          clearInterval(gameTimeIntervalId.current);
+
+          // startBossLevel();
+          return;
         }
 
         if (
@@ -120,12 +117,7 @@ export const Game = ({ setPlay }: { setPlay: () => void }) => {
             asteroids.length === 0 &&
             bulletsFired < LIMIT_ASTEROIDS)
         ) {
-          if (
-            !app.stage.children.find((item) => item?.renderPipeId === 'text')
-          ) {
-            app.stage.addChild(textLoss);
-          }
-          displayGameOverText(textLoss);
+          gameOver = 'loss';
         }
         bullets.forEach((bullet, index) => {
           bullet.y -= 10;
@@ -185,6 +177,163 @@ export const Game = ({ setPlay }: { setPlay: () => void }) => {
           }
         });
       });
+    };
+    const startBossLevel = async () => {
+      const boss = await createBoss({ width: WIDTH, height: HEIGHT });
+      const bossHPBar = createBossHPBar({ app, boss, maxHP: BOSS_HP });
+
+      let bossHP = BOSS_HP;
+      let bossDirection = 1;
+      let bossSpeed = 2;
+
+      app.stage.addChild(boss, bossHPBar.hpBarContainer);
+
+      const bossShootInterval = setInterval(() => {
+        const bossBullet = createBullet({
+          body: boss,
+          color: '0xff0000',
+          type: 'boss',
+        });
+        bossBullets.push(bossBullet);
+        app.stage.addChild(bossBullet);
+      }, 2000);
+
+      app.ticker.add(() => {
+        if (gameOver) {
+          clearInterval(bossShootInterval);
+          clearTimeout(gameTimeIntervalId.current);
+          if (
+            !app.stage.children.find((item) => item?.renderPipeId === 'text')
+          ) {
+            const text = createText({
+              width: WIDTH,
+              height: HEIGHT,
+              type: gameOver === 'win' ? true : false,
+              text: gameOver === 'win' ? 'You WIN!!!' : 'You LOSS...😥',
+            });
+            app.stage.addChild(text);
+          }
+          displayGameOverText();
+          return;
+        }
+
+        boss.x += bossDirection * bossSpeed;
+
+        if (boss.x < 50 || boss.x > app.screen.width - 50) {
+          bossDirection *= -1;
+          bossSpeed = Math.ceil(Math.random() * 5);
+        }
+
+        bossBullets.forEach((bullet, index) => {
+          bullet.y += 5;
+          if (bullet.getBounds().y > app.screen.height) {
+            app.stage.removeChild(bullet);
+            bossBullets.splice(index, 1);
+          }
+
+          const rocketBounds = rocket.getBounds();
+          const bulletBounds = bullet.getBounds();
+
+          if (
+            bulletBounds.x < rocketBounds.x + rocketBounds.width &&
+            bulletBounds.x + bulletBounds.width > rocketBounds.x &&
+            bulletBounds.y < rocketBounds.y + rocketBounds.height &&
+            bulletBounds.y + bulletBounds.height > rocketBounds.y
+          ) {
+            // clearInterval(bossShootInterval);
+            // app.stage.addChild(textLoss);
+            gameOver = 'loss';
+            // app.stop();
+          }
+        });
+
+        if (keys['ArrowLeft'] && rocket.x > rocket.width / 2) {
+          rocket.x -= rocketSpeed;
+        }
+
+        if (
+          keys['ArrowRight'] &&
+          rocket.x < app.screen.width - rocket.width / 2
+        ) {
+          rocket.x += rocketSpeed;
+        }
+
+        bullets.forEach((bullet, index) => {
+          const bulletBounds = bullet.getBounds();
+          const bossBounds = boss.getBounds();
+
+          if (
+            bulletBounds.x < bossBounds.x + bossBounds.width &&
+            bulletBounds.x + bulletBounds.width > bossBounds.x &&
+            bulletBounds.y < bossBounds.y + bossBounds.height &&
+            bulletBounds.y + bulletBounds.height > bossBounds.y
+          ) {
+            bullets.splice(index, 1);
+            app.stage.removeChild(bullet);
+            bossHP -= 1;
+            bossHPBar.updateHP(bossHP);
+
+            if (bossHP <= 0) {
+              clearInterval(bossShootInterval);
+
+              gameOver = 'win';
+            }
+          }
+        });
+
+        bullets.forEach((bullet, index) => {
+          bullet.y += bulletSpeed;
+          if (bullet.y < 0) {
+            app.stage.removeChild(bullet);
+            bullets.splice(index, 1);
+          }
+        });
+      });
+    };
+
+    const displayGameOverText = () => {
+      const text = app.stage.children.find(
+        (item) => item.renderPipeId === 'text'
+      )!;
+      // clearInterval(asteriodIntervalId.current);
+      // clearInterval(gameTimeIntervalId.current);
+      clearTimeout(clearGameTimeTimeoutId.current);
+
+      asteroidImpacts = 0;
+
+      if (text.scale.x > 1) {
+        text.scale.x -= 0.015;
+        text.scale.y -= 0.015;
+      } else {
+        text.scale.set(1);
+        app.stop();
+        setTimeout(() => {
+          setPlay();
+        }, 2000);
+      }
+    };
+
+    (async () => {
+      await app.init({
+        width: WIDTH,
+        height: HEIGHT,
+        backgroundColor: 0x000000,
+      });
+
+      const sprite = await backGround(app);
+
+      app.stage.addChild(sprite, rocket);
+
+      if (canvasRef.current) {
+        canvasRef.current.appendChild(app.canvas);
+      }
+
+      if (level === 1) {
+        startFirstLevel();
+      } else {
+        setGameTime('00');
+        startBossLevel();
+      }
     })();
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -196,7 +345,11 @@ export const Game = ({ setPlay }: { setPlay: () => void }) => {
         }
         bulletsFired += 1;
 
-        const bullet = createBullet(rocket);
+        const bullet = createBullet({
+          body: rocket,
+          color: '0xffffff',
+          type: 'rocet',
+        });
         bullets.push(bullet);
         app.stage.addChild(bullet);
 
@@ -217,10 +370,16 @@ export const Game = ({ setPlay }: { setPlay: () => void }) => {
 
       app.destroy(true, { children: true });
     };
-  }, [setPlay, start]);
-
+  }, [setPlay, level, start]);
+  console.log(gameStarted);
   return (
     <>
+      {gameStarted && (
+        <ShowCountdown
+          onComplete={() => setGameStarted(false)}
+          message="Kill 🔫"
+        />
+      )}
       <ShowCountBullets bullets={showCountBullets} limit={LIMIT_ASTEROIDS} />
       <ShowGameTime time={gameTime} />
       <div ref={canvasRef} />

@@ -1,6 +1,9 @@
 import { Graphics, Container } from 'pixi.js';
-
-export const createRocket = (): Container => {
+interface IRocet {
+  width: number;
+  height: number;
+}
+export const createRocket = ({ width, height }: IRocet): Container => {
   const rocket = new Container();
 
   const body = new Graphics().roundRect(-30, -100, 60, 150, 30).fill(0xffa500);
@@ -35,5 +38,7 @@ export const createRocket = (): Container => {
     rightFin
   );
 
+  rocket.x = width / 2;
+  rocket.y = height - 90;
   return rocket;
 };

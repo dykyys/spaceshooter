@@ -4,7 +4,7 @@ import gsap from 'gsap';
 import s from './ShowCountdown.module.css';
 import { IShowCountdown } from './ShowCountdown.types';
 
-export const ShowCountdown = ({ onComplete }: IShowCountdown) => {
+export const ShowCountdown = ({ onComplete, message }: IShowCountdown) => {
   const [count, setCount] = useState<number>(3);
   const numberRef = useRef(null);
   const containerRef = useRef(null);
@@ -19,8 +19,8 @@ export const ShowCountdown = ({ onComplete }: IShowCountdown) => {
         await new Promise((resolve) => {
           timeline
             .to(numberRef.current, {
-              scale: 4,
-              opacity: 0.6,
+              scale: 3,
+              opacity: 0.8,
               duration: 0.5,
               ease: 'power3.out',
             })
@@ -45,7 +45,7 @@ export const ShowCountdown = ({ onComplete }: IShowCountdown) => {
   return (
     <div ref={containerRef} className={s.box}>
       <div ref={numberRef} className={s.wrapper}>
-        {count > 0 ? count : 'GO!'}
+        {count > 0 ? count : message}
       </div>
     </div>
   );

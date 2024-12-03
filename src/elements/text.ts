@@ -1,6 +1,13 @@
-import { Application, Text, TextStyle } from 'pixi.js';
+import { Text, TextStyle } from 'pixi.js';
 
-export const createText = (app: Application, type: boolean): Text => {
+interface IText {
+  width: number;
+  height: number;
+  type: boolean;
+  text: string;
+}
+
+export const createText = ({ width, height, type, text }: IText): Text => {
   const style = new TextStyle({
     fontFamily: 'Orbitron',
     fontSize: 120,
@@ -21,16 +28,16 @@ export const createText = (app: Application, type: boolean): Text => {
     },
     align: 'center',
   });
-  const text = new Text({
-    text: type ? 'YOU WIN!!!' : 'YOU LOSS...😢',
+  const message = new Text({
+    text,
     style,
   });
 
-  text.anchor.set(0.5);
-  text.scale.set(2);
+  message.anchor.set(0.5);
+  message.scale.set(2);
 
-  text.x = app.screen.width / 2;
-  text.y = app.screen.height / 2;
+  message.x = width / 2;
+  message.y = height / 2;
 
-  return text;
+  return message;
 };

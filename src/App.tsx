@@ -8,6 +8,7 @@ function App() {
 
   const onStartGame = () => {
     setGameStarted(true);
+
     setTimeout(() => {
       setPlay(true);
     }, 4000);
@@ -16,7 +17,10 @@ function App() {
   return (
     <div style={{ position: 'relative', width: '1280px', height: '720px' }}>
       {gameStarted && (
-        <ShowCountdown onComplete={() => setGameStarted(false)} />
+        <ShowCountdown
+          onComplete={() => setGameStarted(false)}
+          message="Go!!!"
+        />
       )}
       {play ? (
         <Game setPlay={() => setPlay(false)} />
