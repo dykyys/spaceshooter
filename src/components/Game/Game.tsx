@@ -27,7 +27,6 @@ export const Game = ({ setPlay }: { setPlay: () => void }) => {
   const [showCountBullets, setShowCountBullets] = useState(0);
   const [gameTime, setGameTime] = useState('00');
   const [level, setLevel] = useState(1);
-
   const [gameStarted, setGameStarted] = useState(false);
 
   const LIMIT_ASTEROIDS: number = 10;
@@ -42,11 +41,6 @@ export const Game = ({ setPlay }: { setPlay: () => void }) => {
     let localGameTime = 0;
 
     if (!start) return;
-
-    gameTimeIntervalId.current = setInterval(() => {
-      localGameTime += 1;
-      setGameTime(updateGameTime);
-    }, 1000);
 
     const app = new Application();
     const rocket = createRocket({ width: WIDTH, height: HEIGHT });
@@ -63,18 +57,31 @@ export const Game = ({ setPlay }: { setPlay: () => void }) => {
     let bulletsFired: number = 0;
     let gameOver: null | 'loss' | 'win' = null;
 
-    const startСountdown = () => {
+    const startGameTimer = () => {
+      gameTimeIntervalId.current = setInterval(() => {
+        localGameTime += 1;
+        setGameTime(updateGameTime);
+      }, 1000);
+
       clearGameTimeTimeoutId.current = setTimeout(() => {
         console.log('clear');
         clearInterval(gameTimeIntervalId.current);
       }, LIMIT_GAME_TIME * 1000);
     };
 
+    const cleanup = () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      clearInterval(gameTimeIntervalId.current);
+      clearTimeout(clearGameTimeTimeoutId.current);
+      app.destroy(true, { children: true });
+    };
+
     const startFirstLevel = () => {
       let destroyedAsteroids: number = 0;
       let asteroidsCreated: number = 0;
 
-      startСountdown();
+      startGameTimer();
 
       const asteriodIntervalId = setInterval(async () => {
         if (asteroidsCreated >= LIMIT_ASTEROIDS) {
@@ -177,7 +184,7 @@ export const Game = ({ setPlay }: { setPlay: () => void }) => {
       const boss = await createBoss({ width: WIDTH, height: HEIGHT });
       const bossHPBar = createBossHPBar({ app, boss, maxHP: BOSS_HP });
 
-      startСountdown();
+      startGameTimer();
 
       setGameTime('00');
       setShowCountBullets(0);
@@ -288,16 +295,11 @@ export const Game = ({ setPlay }: { setPlay: () => void }) => {
       });
     };
     const rocketMovement = () => {
-      if (keys['ArrowLeft'] && rocket.x > rocket.width / 2) {
+      if (keys['ArrowLeft'] && rocket.x > rocket.width / 2)
         rocket.x -= rocketSpeed;
-      }
 
-      if (
-        keys['ArrowRight'] &&
-        rocket.x < app.screen.width - rocket.width / 2
-      ) {
+      if (keys['ArrowRight'] && rocket.x < app.screen.width - rocket.width / 2)
         rocket.x += rocketSpeed;
-      }
     };
     const displayGameOverText = () => {
       const text = findText()!;
@@ -344,10 +346,7 @@ export const Game = ({ setPlay }: { setPlay: () => void }) => {
     const handleKeyDown = (e: KeyboardEvent) => {
       keys[e.code] = true;
 
-      if (e.code === 'Space') {
-        if (bulletsFired === 10) {
-          return;
-        }
+      if (e.code === 'Space' && bulletsFired < 10) {
         bulletsFired += 1;
 
         const bullet = createBullet({
@@ -369,12 +368,7 @@ export const Game = ({ setPlay }: { setPlay: () => void }) => {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-      clearTimeout(clearGameTimeTimeoutId.current);
-      app.destroy(true, { children: true });
-    };
+    return cleanup;
   }, [setPlay, level, start]);
 
   return (
